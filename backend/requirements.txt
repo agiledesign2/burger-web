@@ -1,3 +1,5 @@
 fastapi
+uvicorn
 SQLAlchemy
-
+pydantic-settings
+fastapi-users[sqlalchemy]

@@ -7,4 +7,5 @@ __pycache__
 .env
 .venv
 backend/.env
+backend/.venv
 .DS_Store

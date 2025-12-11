@@ -3,27 +3,29 @@ from sqlalchemy import (
     Integer,
     #PrimaryKeyConstraint,
     String,
-    Decimal,
     ForeignKey
 )
+from sqlalchemy.types import DECIMAL
 from sqlalchemy.orm import relationship
 
-from OrderItemModel import OrderItem
+# Importing OrderItem directly creates a circular import.  Use a string
+# forward reference in the relationship() call instead.
+# from models.OrderItemModel import OrderItem
 from models.BaseModel import EntityMeta, BaseModel
-from typing import List, Optional
 
 class Order(EntityMeta, BaseModel):
     __tablename__ = "orders"
     
-    id: int = Column(Integer, primary_key=True, init=False)
+    id: int = Column(Integer, primary_key=True)
     user_id: int = Column(Integer, ForeignKey("users.id"))
-    total_amount: float = Column(Decimal(10, 2))
+    total_amount: float = Column(DECIMAL(10, 2))
     status: str = Column(String(20), default="created")
 
     # Relationships (Lazy load by default)
-    items: List["OrderItem"] = relationship(
-        back_populates="order", default_factory=list, lazy="selectin"
-    )
+    # ``default_factory`` is a dataclass feature and not supported by
+    # SQLAlchemy relationships.  The relationship is lazy‑loaded by
+    # default, so we simply omit the argument.
+    items = relationship("OrderItem", back_populates="order", lazy="selectin")
     
     def normalize(self):
         return {

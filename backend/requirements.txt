@@ -1,5 +1,9 @@
 fastapi
 uvicorn
 SQLAlchemy
+asyncpg    # psycopg2
 pydantic-settings
 fastapi-users[sqlalchemy]
+sendgrid
+redis
+rq

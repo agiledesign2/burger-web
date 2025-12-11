@@ -1,11 +1,13 @@
-from typing import List, Optional, Generic, TypeVar, Type
+from typing import List, Optional, TypeVar, Type
 
 from fastapi import Depends
-from sqlalchemy.orm import Session, lazyload
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import Session, lazyload, selectinload
 
-from configs.Database import (
-    get_db_connection,
-)
+#from configs.Database import (
+#    get_db_connection,
+#)
+from configs.Database import get_async_session
 
 # Type definition for Model
 M = TypeVar("M")
@@ -14,16 +16,16 @@ M = TypeVar("M")
 K = TypeVar("K")
 
 class ModelRepository:
-    db: Session
+    db: AsyncSession
     model: Type[M]
 
     def __init__(
-        self, model: Type[M], db: Session = Depends(get_db_connection)
+        self, model: Type[M], db: AsyncSession = Depends(get_async_session) #Depends(get_db_connection)
     ) -> None:
         self.db = db
         self.model = model
 
-    def list(
+    async def list(
         self,
         name: Optional[str],
         limit: Optional[int],
@@ -34,9 +36,9 @@ class ModelRepository:
         if name:
             query = query.filter_by(name=name)
 
-        return query.offset(start).limit(limit).all()
+        return await query.offset(start).limit(limit).all()
 
-    def get(self, id: K, relationships: Optional[List[str]] = None) -> Optional[M]:
+    async def get(self, id: K, relationships: Optional[List[str]] = None) -> Optional[M]:
         """Get an instance by id and optionally eager/lazy-load relationships.
 
         `relationships` should be a list of attribute names on the model (e.g. `['books', 'author']`).
@@ -54,22 +56,31 @@ class ModelRepository:
                 opts.append(lazyload(attr))
             if opts:
                 options = opts
+        """
+        options = []
+        if relationships:
+            for rel in relationships:
+                try:
+                    attr = getattr(self.model, rel)
+                except Exception:
+                    continue
+                options.append(selectinload(attr))
+        """
+        return await self.db.get(self.model, id, options=options)
 
-        return self.db.get(self.model, id, options=options)
-
-    def create(self, instance: M) -> M:
-        self.db.add(instance)
-        self.db.commit()
-        self.db.refresh(instance)
+    async def create(self, instance: M) -> M:
+        await self.db.add(instance)
+        await self.db.commit()
+        await self.db.refresh(instance)
         return instance
 
-    def update(self, id: K, instance: M) -> M:
+    async def update(self, id: K, instance: M) -> M:
         instance.id = id
-        self.db.merge(instance)
-        self.db.commit()
+        await self.db.merge(instance)
+        await self.db.commit()
         return instance
 
-    def delete(self, instance: M) -> None:
-        self.db.delete(instance)
-        self.db.commit()
-        self.db.flush()
+    async def delete(self, instance: M) -> None:
+        await self.db.delete(instance)
+        await self.db.commit()
+        await self.db.flush()

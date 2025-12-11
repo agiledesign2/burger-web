@@ -1,23 +1,26 @@
 from sqlalchemy import Column, DateTime
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.sql import func
+from sqlalchemy.orm import Mapped
 from datetime import datetime
 
-from configs.Database import Engine
+from configs.Database import engine
 
 # Base Entity Model Schema
 EntityMeta = declarative_base()
 
 
 def init():
-    EntityMeta.metadata.create_all(bind=Engine)
+    EntityMeta.metadata.create_all(bind=engine)
     
 class BaseModel():
-    #id: int = Field(primary_key=True)
-    created_at: datetime = Column(
+    __allow_unmapped__ = True
+
+    # id: int = Field(primary_key=True)
+    created_at: Mapped[datetime] = Column(
         DateTime(timezone=True), server_default=func.now()
-        )
-    updated_at: datetime = Column(
+    )
+    updated_at: Mapped[datetime] = Column(
         DateTime(timezone=True), onupdate=func.now()
     )
     

@@ -2,25 +2,26 @@ from sqlalchemy import (
     Column,
     Integer,
     #PrimaryKeyConstraint,
-    Decimal,
     ForeignKey
 )
+from sqlalchemy.types import DECIMAL
 from sqlalchemy.orm import relationship
 
-from models.OrderModel import Order
+# Importing Order directly causes a circular import because OrderItemModel
+# is imported by OrderModel.  Use a forward reference in the
+# relationship() call instead of importing the class.
 from models.BaseModel import EntityMeta, BaseModel
-from typing import Optional
 
 class OrderItem(EntityMeta, BaseModel):
     __tablename__ = "order_items"
     
-    id: int = Column(primary_key=True, init=False)
-    order_id: int = Column(ForeignKey("orders.id"), init=False)
+    id: int = Column(primary_key=True)
+    order_id: int = Column(ForeignKey("orders.id"))
     product_id: int = Column(ForeignKey("products.id"))
     quantity: int = Column(Integer, default=1)
-    total_amount: float = Column(Decimal(10, 2)) # Snapshot of price
+    total_amount: float = Column(DECIMAL(10, 2)) # Snapshot of price
     
-    order: Order = relationship(back_populates="items", init=False)
+    order = relationship("Order", back_populates="items")
     
     def normalize(self):
         return {

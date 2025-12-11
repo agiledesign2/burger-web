@@ -4,19 +4,19 @@ from sqlalchemy import (
     #PrimaryKeyConstraint,
     String,
     Boolean,
-    Decimal,
     Text
 )
+from sqlalchemy.types import DECIMAL
 from models.BaseModel import EntityMeta, BaseModel
 from typing import Optional
 
 class Product(EntityMeta, BaseModel):
     __tablename__ = "products"
-    
-    id: int = Column(Integer, primary_key=True, init=False)
+
+    id: int = Column(Integer, primary_key=True)
     name: str = Column(String(100))
     description: Optional[str] = Column(Text, default=None)
-    price: float = Column(Decimal(10, 2))
+    price: float = Column(DECIMAL(10, 2))
     category: str = Column(String(50)) # burger, side, drink, addon
     image_url: Optional[str] = Column(String(255), default=None)
     in_stock: bool = Column(Boolean, default=True)
